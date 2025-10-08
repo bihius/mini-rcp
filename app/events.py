@@ -1,6 +1,10 @@
 import pandas as pd
 from datetime import datetime
 from loguru import logger
+import socket
+import platform
+import os
+import getpass
 
 
 
@@ -58,13 +62,42 @@ class EventProcessor:
             
             logger.info(f"Connecting to SMB: server={server}, share={share}, file={file_path}")
             
-            # Create SMB connection
-            # Use anonymous connection for now - you may need to modify for authentication
-            conn = SMBConnection('', '', socket.gethostname(), server, use_ntlm_v2=True)
+            # Try different authentication methods
+            conn = None
             
-            # Connect without authentication (will use current user's credentials if available)
-            if not conn.connect(server, 445):
-                raise Exception("Failed to connect to SMB server")
+            if platform.system() == 'Windows':
+                try:
+                    # Try with current Windows user (integrated authentication)
+                    username = os.environ.get('USERNAME', '')
+                    domain = os.environ.get('USERDOMAIN', '')
+                    
+                    if username:
+                        logger.info(f"Trying Windows integrated authentication with user: {domain}\\{username}")
+                        conn = SMBConnection(username, '', socket.gethostname(), server, domain=domain, use_ntlm_v2=True)
+                        if conn.connect(server, 445):
+                            logger.info("Connected using Windows integrated authentication")
+                        else:
+                            conn = None
+                except Exception as auth_e:
+                    logger.warning(f"Windows integrated authentication failed: {auth_e}")
+                    conn = None
+            
+            # If Windows auth failed or not on Windows, try anonymous
+            if conn is None:
+                logger.info("Trying anonymous SMB connection")
+                conn = SMBConnection('', '', socket.gethostname(), server, use_ntlm_v2=True)
+                if not conn.connect(server, 445):
+                    # Last resort: try to read directly as UNC path (Windows only)
+                    if platform.system() == 'Windows':
+                        logger.info("Trying direct UNC path access")
+                        try:
+                            file_path_windows = file_path.replace('/', '\\')
+                            unc_path = f"\\\\{server}\\{share}\\{file_path_windows}"
+                            with open(unc_path, 'r', encoding='utf-8') as f:
+                                return f.read()
+                        except Exception as unc_e:
+                            logger.error(f"Direct UNC access also failed: {unc_e}")
+                    raise Exception("Failed to connect to SMB server with all available methods")
             
             # Open and read the file
             with conn.openFile(share, file_path, 'r') as f:

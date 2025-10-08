@@ -7,15 +7,63 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
 import io
+import os
+import platform
+
+def find_font_file(font_name):
+    """Find font file in common system locations"""
+    system = platform.system().lower()
+
+    # Common font locations
+    if system == 'windows':
+        font_dirs = [
+            'C:\\Windows\\Fonts',
+            'C:\\Windows\\System32',
+            os.path.expanduser('~\\AppData\\Local\\Microsoft\\Windows\\Fonts')
+        ]
+        # Windows font naming conventions
+        font_files = [
+            f'{font_name}.ttf',
+            f'{font_name}.TTF',
+            f'{font_name} Regular.ttf',
+            f'{font_name}-Regular.ttf'
+        ]
+    else:  # Linux/Unix
+        font_dirs = [
+            '/usr/share/fonts/TTF',
+            '/usr/share/fonts/truetype',
+            '/usr/share/fonts',
+            '/usr/local/share/fonts'
+        ]
+        font_files = [
+            f'{font_name}.ttf',
+            f'{font_name}.TTF'
+        ]
+
+    for font_dir in font_dirs:
+        if os.path.exists(font_dir):
+            for font_file in font_files:
+                font_path = os.path.join(font_dir, font_file)
+                if os.path.exists(font_path):
+                    return font_path
+
+    return None
 
 # Register Unicode font for Polish characters
 try:
-    # Register DejaVu Sans font
-    pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/TTF/DejaVuSans.ttf'))
-    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf'))
-    FONT_NAME = 'DejaVuSans'
-    FONT_BOLD = 'DejaVuSans-Bold'
-    print("Using DejaVu fonts for Polish characters")
+    # Try to find DejaVu Sans fonts
+    dejavu_regular = find_font_file('DejaVuSans')
+    dejavu_bold = find_font_file('DejaVuSans-Bold')
+
+    if dejavu_regular and dejavu_bold:
+        pdfmetrics.registerFont(TTFont('DejaVuSans', dejavu_regular))
+        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', dejavu_bold))
+        FONT_NAME = 'DejaVuSans'
+        FONT_BOLD = 'DejaVuSans-Bold'
+        print("Using DejaVu fonts for Polish characters")
+    else:
+        raise Exception("DejaVu fonts not found")
+
 except Exception as e:
     print(f"Could not load DejaVu fonts: {e}")
     FONT_NAME = 'Helvetica'
