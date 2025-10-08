@@ -1,0 +1,15 @@
+[Unit]
+Description=MINI RCP Background Processor
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/path/to/stepan-rcp
+Environment=PATH=/path/to/stepan-rcp/.venv/bin
+ExecStart=/path/to/stepan-rcp/.venv/bin/python -m app.processor
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[project]
+name = "stepan-rcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.1.2",
+    "loguru>=0.7.3",
+    "pandas>=2.3.2",
+    "reportlab>=4.0.0",
+    "pysmb>=1.2.0",
+    "ruff>=0.13.1",
+]

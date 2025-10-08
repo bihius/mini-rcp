@@ -1,0 +1,15 @@
+[Unit]
+Description=MINI RCP Web Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/path/to/stepan-rcp
+Environment=PATH=/path/to/stepan-rcp/.venv/bin
+ExecStart=/path/to/stepan-rcp/.venv/bin/python -m app.web
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

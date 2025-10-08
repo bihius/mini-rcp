@@ -1,0 +1,1 @@
+# MINI RCP Application Package
