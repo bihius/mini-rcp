@@ -31,14 +31,28 @@ class EventProcessor:
         clean_lines = [line for line in lines if not line.startswith('#') and line.strip()]
         logger.debug(f"Clean lines: {len(clean_lines)}")
         
-        # Parse CSV data, filtering for rows with exactly 5 columns
+        # Parse CSV data, handling variable column counts
         data = []
         for line in clean_lines:
             parts = line.strip().split(';')
-            if len(parts) == 5:  # Only include rows with exactly 5 columns
-                data.append(parts)
+            # Remove empty trailing fields
+            while parts and parts[-1] == '':
+                parts.pop()
+            
+            # Skip if not enough columns (need at least time, date, id_point)
+            if len(parts) < 5:
+                logger.debug(f"Skipping line with insufficient columns ({len(parts)}): {line[:50]}...")
+                continue
+            
+            # Pad with empty strings if needed to ensure 5 columns
+            while len(parts) < 5:
+                parts.append('')
+            
+            # Take only first 5 columns (time, date, name, surname, id_point)
+            if len(parts) >= 5:
+                data.append(parts[:5])
             else:
-                logger.debug(f"Skipping line with {len(parts)} columns: {line[:50]}...")
+                logger.debug(f"Skipping malformed line: {line[:50]}...")
         
         logger.info(f"Valid data rows: {len(data)} (filtered from {len(clean_lines)} total lines)")
         
