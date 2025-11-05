@@ -73,7 +73,22 @@ def archive_file( events_file, archive_folder):
             with open(dest_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             
-            logger.info(f"Archived SMB file {events_file} to {dest_path}")
+            # Now delete the original SMB file to complete the "move" operation
+            try:
+                import smbclient
+                # Configure smbclient to use current user's credentials
+                smbclient.ClientConfig(username=None, password=None)
+                
+                # Build the SMB URL for deletion
+                smb_url = events_file.replace('/', '\\')
+                smbclient.remove(smb_url)
+                logger.info(f"Deleted original SMB file: {events_file}")
+                
+            except Exception as delete_e:
+                logger.warning(f"Failed to delete original SMB file {events_file}: {delete_e}")
+                # Don't fail the entire operation if deletion fails
+            
+            logger.info(f"Archived (moved) SMB file {events_file} to {dest_path}")
             return
             
         except Exception as e:
