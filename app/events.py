@@ -54,7 +54,7 @@ class EventProcessor:
                     with open(file_path, 'r', encoding=encoding) as f:
                         content = f.read()
                 logger.info(f"Successfully read file using {encoding} encoding")
-                break
+                return content
             except UnicodeDecodeError:
                 logger.debug(f"Failed to decode with {encoding}, trying next encoding...")
                 continue
@@ -64,6 +64,8 @@ class EventProcessor:
         
         if content is None:
             raise Exception("Failed to read file with any supported encoding")
+        
+        return content
         
     @staticmethod
     def _read_smb_file(smb_path):
@@ -93,7 +95,7 @@ class EventProcessor:
             smb_url = f"\\\\{server}\\{share}\\{file_path_windows}"
             
             # Read the file using encoding detection
-            return cls._read_file_with_encoding_detection(smb_url, use_smb=True)
+            return EventProcessor._read_file_with_encoding_detection(smb_url, use_smb=True)
             
         except Exception as e:
             logger.error(f"Failed to read SMB file: {e}")
