@@ -35,6 +35,3 @@ echo.
 echo MINI RCP services started successfully!
 echo Web server: http://localhost:5000
 echo Check logs in logs\ folder for details
-echo.
-echo Press any key to exit (services will continue running)...
-pause > nul

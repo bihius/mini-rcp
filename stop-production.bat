@@ -20,5 +20,3 @@ if errorlevel 1 (
 echo.
 echo MINI RCP services stopped.
 echo Check Task Manager to confirm processes are terminated.
-
-pause
