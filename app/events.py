@@ -25,8 +25,7 @@ class EventProcessor:
             content = cls._read_smb_file(file_path)
         else:
             logger.info("Using local file access")
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = cls._read_file_with_encoding_detection(file_path, use_smb=False)
         
         lines = content.splitlines()
         clean_lines = [line for line in lines if not line.startswith('#') and line.strip()]
@@ -39,11 +38,38 @@ class EventProcessor:
         return events
     
     @staticmethod
+    def _read_file_with_encoding_detection(file_path, use_smb=False):
+        """Read file with automatic encoding detection"""
+        encodings_to_try = ['utf-8', 'utf-16', 'cp1252', 'latin1']
+        content = None
+        
+        for encoding in encodings_to_try:
+            try:
+                logger.debug(f"Trying to read file with encoding: {encoding}")
+                if use_smb:
+                    import smbclient
+                    with smbclient.open_file(file_path, mode='r', encoding=encoding) as f:
+                        content = f.read()
+                else:
+                    with open(file_path, 'r', encoding=encoding) as f:
+                        content = f.read()
+                logger.info(f"Successfully read file using {encoding} encoding")
+                break
+            except UnicodeDecodeError:
+                logger.debug(f"Failed to decode with {encoding}, trying next encoding...")
+                continue
+            except Exception as enc_error:
+                logger.debug(f"Error with {encoding}: {enc_error}")
+                continue
+        
+        if content is None:
+            raise Exception("Failed to read file with any supported encoding")
+        
+    @staticmethod
     def _read_smb_file(smb_path):
         """Read file from SMB share using smbprotocol with proper Windows authentication"""
         try:
             import smbclient
-            import os
             
             # Parse SMB path: \\server\share\path\to\file or //server/share/path/to/file
             if smb_path.startswith('\\\\'):
@@ -66,19 +92,12 @@ class EventProcessor:
             file_path_windows = file_path.replace('/', '\\')
             smb_url = f"\\\\{server}\\{share}\\{file_path_windows}"
             
-            # Read the file using smbclient (handles authentication automatically)
-            with smbclient.open_file(smb_url, mode='r', encoding='utf-8') as f:
-                content = f.read()
-            
-            logger.info("Successfully read SMB file using integrated authentication")
-            return content
+            # Read the file using encoding detection
+            return cls._read_file_with_encoding_detection(smb_url, use_smb=True)
             
         except Exception as e:
             logger.error(f"Failed to read SMB file: {e}")
             raise
-    
-    @staticmethod
-    def filter_events(events, event_ids):
         logger.debug(f"Filtering {len(events)} events with ids {event_ids}")
         filtered = [event for event in events if event.id_point in event_ids]
         logger.info(f"Filtered to {len(filtered)} events")
