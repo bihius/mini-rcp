@@ -25,11 +25,11 @@ if errorlevel 1 (
 
 REM Start the web server in background
 echo Starting web server...
-start "MINI RCP Web Server" python -m app.web
+start /B "MINI RCP Web Server" python -m app.web
 
 REM Start the processor in background
 echo Starting processor...
-start "MINI RCP Processor" python -m app.processor
+start /B "MINI RCP Processor" python -m app.processor
 
 echo.
 echo MINI RCP services started successfully!

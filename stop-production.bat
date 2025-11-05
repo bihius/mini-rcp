@@ -3,28 +3,23 @@ REM MINI RCP Production Stop Script for Windows
 
 echo Stopping MINI RCP Production Services...
 
-REM Function to stop service
-:stop_service
-set "name=%~1"
-set "pid_file=%name%.pid"
-
-if exist "%pid_file%" (
-    for /f "tokens=*" %%i in (%pid_file%) do set "pid=%%i"
-    echo Stopping %name% (PID: %pid%)...
-    taskkill /PID %pid% /F >nul 2>&1
-    if errorlevel 1 (
-        echo Process %pid% not found or already stopped
-    )
-    del "%pid_file%" 2>nul
+REM Stop web server
+echo Stopping web server...
+taskkill /F /IM python.exe /FI "WINDOWTITLE eq MINI RCP Web Server*" >nul 2>&1
+if errorlevel 1 (
+    echo Web server not found or already stopped
 ) else (
-    echo %name% PID file not found
+    echo Web server stopped
 )
 
-goto :eof
-
-REM Stop services
-call :stop_service "web-server"
-call :stop_service "processor"
+REM Stop processor
+echo Stopping processor...
+taskkill /F /IM python.exe /FI "WINDOWTITLE eq MINI RCP Processor*" >nul 2>&1
+if errorlevel 1 (
+    echo Processor not found or already stopped
+) else (
+    echo Processor stopped
+)
 
 echo.
 echo MINI RCP services stopped.
