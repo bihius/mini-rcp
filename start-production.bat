@@ -4,22 +4,32 @@ REM This script starts both the web server and processor services
 
 echo Starting MINI RCP Production Services...
 
-REM Check if uv is available
-uv --version >nul 2>&1
+REM Check if virtual environment exists
+if not exist ".venv\Scripts\activate.bat" (
+    echo Error: Virtual environment not found. Please run 'uv sync' first.
+    pause
+    exit /b 1
+)
+
+REM Activate virtual environment
+echo Activating virtual environment...
+call .venv\Scripts\activate.bat
+
+REM Check if Python is available in venv
+python --version >nul 2>&1
 if errorlevel 1 (
-    echo Error: uv is not installed. Please install uv first.
-    echo Visit: https://github.com/astral-sh/uv
+    echo Error: Python not found in virtual environment.
     pause
     exit /b 1
 )
 
 REM Start the web server in background
 echo Starting web server...
-start "MINI RCP Web Server" uv run python -m app.web
+start "MINI RCP Web Server" python -m app.web
 
 REM Start the processor in background
 echo Starting processor...
-start "MINI RCP Processor" uv run python -m app.processor
+start "MINI RCP Processor" python -m app.processor
 
 echo.
 echo MINI RCP services started successfully!
