@@ -12,7 +12,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return """
+    # Get current year and month for default values
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+    
+    return f"""
     <!DOCTYPE html>
     <html lang="pl">
     <head>
@@ -35,8 +39,8 @@ def index():
                     <h2>Raport dzienny</h2>
                     <form action="/day_report" method="post" class="mb-3">
                         <div class="mb-3">
-                            <label for="date" class="form-label">Wybierz datę (MM/DD/YYYY):</label>
-                            <input type="text" class="form-control" id="date" name="date" placeholder="MM/DD/YYYY" required>
+                            <label for="date" class="form-label">Wybierz datę (DD/MM/YYYY):</label>
+                            <input type="text" class="form-control" id="date" name="date" placeholder="DD/MM/YYYY" required>
                         </div>
                         <button type="submit" class="btn btn-success">Generuj raport dzienny</button>
                     </form>
@@ -47,11 +51,11 @@ def index():
                     <form action="/monthly_report" method="post" class="mb-3">
                         <div class="mb-3">
                             <label for="year" class="form-label">Rok:</label>
-                            <input type="number" class="form-control" id="year" name="year" placeholder="2025" required>
+                            <input type="number" class="form-control" id="year" name="year" value="{current_year}" required>
                         </div>
                         <div class="mb-3">
                             <label for="month" class="form-label">Miesiąc:</label>
-                            <input type="number" class="form-control" id="month" name="month" min="1" max="12" placeholder="9" required>
+                            <input type="number" class="form-control" id="month" name="month" min="1" max="12" value="{current_month}" required>
                         </div>
                         <button type="submit" class="btn btn-success">Generuj raport miesięczny</button>
                     </form>
@@ -93,9 +97,9 @@ def users_on_site():
 @app.route('/day_report', methods=['POST'])
 def day_report():
     date_input = request.form['date']
-    # Convert from MM/DD/YYYY to YYYY-MM-DD format
+    # Convert from DD/MM/YYYY to YYYY-MM-DD format
     try:
-        date_obj = datetime.strptime(date_input, '%m/%d/%Y')
+        date_obj = datetime.strptime(date_input, '%d/%m/%Y')
         date = date_obj.strftime('%Y-%m-%d')
         display_date = date_obj.strftime('%d/%m/%Y')  # For display
     except ValueError:

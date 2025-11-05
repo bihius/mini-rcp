@@ -137,7 +137,7 @@ def calculate_monthly_time_spent(year, month, in_event_ids, out_event_ids):
         earliest_in = None
         latest_out = None
         for date_str, time_str, id_point in events:
-            dt = datetime.strptime(f"{date_str} {time_str}", '%Y-%m-%d %H:%M')
+            dt = datetime.strptime(f"{date_str} {time_str}", '%Y-%m-%d %H:%M:%S')
             if id_point in in_event_ids:
                 if earliest_in is None or dt < earliest_in:
                     earliest_in = dt
