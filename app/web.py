@@ -1,8 +1,9 @@
 from . import database
 from . import files
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, redirect, url_for, flash
 from loguru import logger
 from . import pdf
+from . import events
 from datetime import datetime
 
 # Load configuration for web
@@ -33,6 +34,8 @@ def index():
                 <div class="col-md-4">
                     <h2>Obecność</h2>
                     <a href='/users_on_site' class="btn btn-primary">Wyświetl obecnych pracowników</a>
+                    <br><br>
+                    <a href='/process_data' class="btn btn-warning">Pobierz dane</a>
                 </div>
                 
                 <div class="col-md-4">
@@ -222,6 +225,39 @@ def monthly_report_pdf(year, month):
     monthly_time = database.calculate_monthly_time_spent(year, month, in_event_ids, out_event_ids)
     pdf_buffer = pdf.generate_monthly_pdf(year, month, monthly_time)
     return send_file(pdf_buffer, as_attachment=True, download_name=f'raport_miesieczny_{year}_{month:02d}.pdf', mimetype='application/pdf')
+
+@app.route('/process_data')
+def process_data():
+    try:
+        logger.info("Manual data processing triggered from web interface")
+        
+        # Ensure archive folder exists
+        files.ensure_archive_folder(archive_folder)
+        
+        # Initialize database
+        database.init_db()
+        
+        # Read and process events
+        logger.info(f"Reading events from {events_file}")
+        event_list = events.read_events(events_file, event_ids)
+        logger.info(f"Loaded {len(event_list)} events")
+        
+        for event in event_list:
+            database.insert_event(event)
+        logger.info("Inserted events into database")
+        
+        # Archive the processed events file
+        logger.info(f"Archiving {events_file} to {archive_folder}")
+        files.archive_file(events_file, archive_folder)
+        logger.info("Manual data processing completed")
+        
+        # Redirect back to main page with success message
+        return redirect(url_for('index'))
+        
+    except Exception as e:
+        logger.error(f"Error in manual data processing: {e}")
+        # Redirect back to main page even on error
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     logger.add("logs/web.log", rotation="10 MB", retention="1 week")
