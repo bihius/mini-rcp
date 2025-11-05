@@ -40,7 +40,7 @@ def index():
                     <form action="/day_report" method="post" class="mb-3">
                         <div class="mb-3">
                             <label for="date" class="form-label">Wybierz datę (DD/MM/YYYY):</label>
-                            <input type="text" class="form-control" id="date" name="date" placeholder="DD/MM/YYYY" required>
+                            <input type="text" class="form-control" id="date" name="date" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDate(this)" required>
                         </div>
                         <button type="submit" class="btn btn-success">Generuj raport dzienny</button>
                     </form>
@@ -62,6 +62,28 @@ def index():
                 </div>
             </div>
         </div>
+        
+        <script>
+        function formatDate(input) {{
+            // Remove all non-digit characters
+            let value = input.value.replace(/\D/g, '');
+            
+            // Limit to 8 digits (DDMMYYYY)
+            if (value.length > 8) {{
+                value = value.substring(0, 8);
+            }}
+            
+            // Add slashes at appropriate positions
+            if (value.length >= 2) {{
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }}
+            if (value.length >= 5) {{
+                value = value.substring(0, 5) + '/' + value.substring(5);
+            }}
+            
+            input.value = value;
+        }}
+        </script>
     </body>
     </html>
     """
