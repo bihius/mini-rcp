@@ -62,6 +62,21 @@ class EventProcessor:
             
             logger.info(f"Connecting to SMB: server={server}, share={share}, file={file_path}")
             
+            # First, test basic network connectivity
+            import socket as sock_module
+            try:
+                logger.info(f"Testing network connectivity to {server}:445")
+                test_sock = sock_module.socket(sock_module.AF_INET, sock_module.SOCK_STREAM)
+                test_sock.settimeout(5)
+                result = test_sock.connect_ex((server, 445))
+                test_sock.close()
+                if result != 0:
+                    logger.warning(f"Cannot connect to {server}:445 (SMB port). Error code: {result}")
+                else:
+                    logger.info(f"Network connectivity to {server}:445 is OK")
+            except Exception as net_e:
+                logger.warning(f"Network connectivity test failed: {net_e}")
+            
             # Try different authentication methods
             conn = None
             
@@ -84,20 +99,32 @@ class EventProcessor:
             
             # If Windows auth failed or not on Windows, try anonymous
             if conn is None:
-                logger.info("Trying anonymous SMB connection")
-                conn = SMBConnection('', '', socket.gethostname(), server, use_ntlm_v2=True)
-                if not conn.connect(server, 445):
-                    # Last resort: try to read directly as UNC path (Windows only)
-                    if platform.system() == 'Windows':
-                        logger.info("Trying direct UNC path access")
-                        try:
-                            file_path_windows = file_path.replace('/', '\\')
-                            unc_path = f"\\\\{server}\\{share}\\{file_path_windows}"
-                            with open(unc_path, 'r', encoding='utf-8') as f:
-                                return f.read()
-                        except Exception as unc_e:
-                            logger.error(f"Direct UNC access also failed: {unc_e}")
+                try:
+                    logger.info("Trying anonymous SMB connection")
+                    conn = SMBConnection('', '', socket.gethostname(), server, use_ntlm_v2=True)
+                    if conn.connect(server, 445):
+                        logger.info("Connected using anonymous SMB")
+                    else:
+                        conn = None
+                except Exception as anon_e:
+                    logger.warning(f"Anonymous SMB connection failed: {anon_e}")
+                    conn = None
+            
+            # If all SMB connections failed, try direct UNC path access (Windows only)
+            if conn is None and platform.system() == 'Windows':
+                logger.info("Trying direct UNC path access")
+                try:
+                    file_path_windows = file_path.replace('/', '\\')
+                    unc_path = f"\\\\{server}\\{share}\\{file_path_windows}"
+                    with open(unc_path, 'r', encoding='utf-8') as f:
+                        return f.read()
+                except Exception as unc_e:
+                    logger.error(f"Direct UNC access also failed: {unc_e}")
                     raise Exception("Failed to connect to SMB server with all available methods")
+            
+            # If we get here on non-Windows or all methods failed
+            if conn is None:
+                raise Exception("Failed to connect to SMB server with all available methods")
             
             # Open and read the file
             with conn.openFile(share, file_path, 'r') as f:

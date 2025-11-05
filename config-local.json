@@ -1,0 +1,15 @@
+{
+    "events_file": "PREvents.csv",
+    "archive_folder": "archive",
+    "in_event_ids": [
+        9,
+        31,
+        1032
+    ],
+    "out_event_ids": [
+        10,
+        32,
+        1033
+    ],
+    "processing_interval_minutes": 30
+}
