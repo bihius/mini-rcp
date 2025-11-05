@@ -9,6 +9,6 @@ dependencies = [
     "loguru>=0.7.3",
     "pandas>=2.3.2",
     "reportlab>=4.0.0",
-    "pysmb>=1.2.0",
+    "smbprotocol>=1.10.0",
     "ruff>=0.13.1",
 ]
