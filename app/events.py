@@ -30,7 +30,21 @@ class EventProcessor:
         lines = content.splitlines()
         clean_lines = [line for line in lines if not line.startswith('#') and line.strip()]
         logger.debug(f"Clean lines: {len(clean_lines)}")
-        data = [line.strip().split(';') for line in clean_lines]
+        
+        # Parse CSV data, filtering for rows with exactly 5 columns
+        data = []
+        for line in clean_lines:
+            parts = line.strip().split(';')
+            if len(parts) == 5:  # Only include rows with exactly 5 columns
+                data.append(parts)
+            else:
+                logger.debug(f"Skipping line with {len(parts)} columns: {line[:50]}...")
+        
+        logger.info(f"Valid data rows: {len(data)} (filtered from {len(clean_lines)} total lines)")
+        
+        if not data:
+            raise Exception("No valid data rows found in CSV file")
+        
         df = pd.DataFrame(data, columns=['time', 'date', 'name', 'surname', 'id_point'])
         df['id_point'] = df['id_point'].astype(int)
         events = [cls(**row) for _, row in df.iterrows()]
@@ -40,7 +54,8 @@ class EventProcessor:
     @staticmethod
     def _read_file_with_encoding_detection(file_path, use_smb=False):
         """Read file with automatic encoding detection"""
-        encodings_to_try = ['utf-8', 'utf-16', 'cp1252', 'latin1']
+        # Try Polish-friendly encodings first
+        encodings_to_try = ['cp1250', 'utf-8', 'utf-16', 'cp1252', 'latin1']
         content = None
         
         for encoding in encodings_to_try:
@@ -62,10 +77,7 @@ class EventProcessor:
                 logger.debug(f"Error with {encoding}: {enc_error}")
                 continue
         
-        if content is None:
-            raise Exception("Failed to read file with any supported encoding")
-        
-        return content
+        raise Exception("Failed to read file with any supported encoding")
         
     @staticmethod
     def _read_smb_file(smb_path):
