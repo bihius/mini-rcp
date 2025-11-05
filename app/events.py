@@ -126,6 +126,9 @@ class EventProcessor:
         except Exception as e:
             logger.error(f"Failed to read SMB file: {e}")
             raise
+    
+    @staticmethod
+    def filter_events(events, event_ids):
         logger.debug(f"Filtering {len(events)} events with ids {event_ids}")
         filtered = [event for event in events if event.id_point in event_ids]
         logger.info(f"Filtered to {len(filtered)} events")
