@@ -97,7 +97,7 @@ def calculate_time_spent(target_date, in_event_ids, out_event_ids):
         first_in = None
         last_out = None
         for time_str, id_point in events:
-            time_obj = datetime.strptime(time_str, '%H:%M').time()
+            time_obj = datetime.strptime(time_str, '%H:%M:%S').time()
             if id_point in in_event_ids:
                 if first_in is None:
                     first_in = time_obj

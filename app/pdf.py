@@ -8,6 +8,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
 import io
 import os
+from datetime import datetime
 import platform
 
 def find_font_file(font_name):
@@ -83,8 +84,16 @@ def generate_daily_pdf(date, time_spent):
     
     elements = []
     
+    # Format date as DD/MM/YYYY
+    try:
+        date_obj = datetime.strptime(date, '%Y-%m-%d')
+        formatted_date = date_obj.strftime('%d/%m/%Y')
+    except ValueError:
+        # If date is already in a different format, use as-is
+        formatted_date = date
+    
     # Title
-    title = Paragraph(f"Raport dzienny dla {date}", title_style)
+    title = Paragraph(f"Raport dzienny dla {formatted_date}", title_style)
     elements.append(title)
     elements.append(Spacer(1, 0.5*inch))
     

@@ -3,6 +3,7 @@ from . import files
 from flask import Flask, request, send_file
 from loguru import logger
 from . import pdf
+from datetime import datetime
 
 # Load configuration for web
 in_event_ids, out_event_ids, event_ids, events_file, archive_folder, processing_interval_minutes = files.load_config()
@@ -34,8 +35,8 @@ def index():
                     <h2>Raport dzienny</h2>
                     <form action="/day_report" method="post" class="mb-3">
                         <div class="mb-3">
-                            <label for="date" class="form-label">Wybierz datę:</label>
-                            <input type="date" class="form-control" id="date" name="date" required>
+                            <label for="date" class="form-label">Wybierz datę (MM/DD/YYYY):</label>
+                            <input type="text" class="form-control" id="date" name="date" placeholder="MM/DD/YYYY" required>
                         </div>
                         <button type="submit" class="btn btn-success">Generuj raport dzienny</button>
                     </form>
@@ -91,7 +92,17 @@ def users_on_site():
 
 @app.route('/day_report', methods=['POST'])
 def day_report():
-    date = request.form['date']
+    date_input = request.form['date']
+    # Convert from MM/DD/YYYY to YYYY-MM-DD format
+    try:
+        date_obj = datetime.strptime(date_input, '%m/%d/%Y')
+        date = date_obj.strftime('%Y-%m-%d')
+        display_date = date_obj.strftime('%d/%m/%Y')  # For display
+    except ValueError:
+        # If conversion fails, assume it's already in correct format
+        date = date_input
+        display_date = date_input
+    
     time_spent = database.calculate_time_spent(date, in_event_ids, out_event_ids)
     html = f"""
     <!DOCTYPE html>
@@ -104,7 +115,7 @@ def day_report():
     </head>
     <body>
         <div class="container mt-5">
-            <h1>Raport dzienny dla {date}</h1>
+            <h1>Raport dzienny dla {display_date}</h1>
             <table class="table table-striped">
                 <thead>
                     <tr>
